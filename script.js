@@ -139,6 +139,9 @@ window.addEventListener('load', function(){
                 context.fillRect(20 + 5 * i, 50, 3, 20);
             }
         }
+        addEnemy(){
+            
+        }
     }
     class Game {
         constructor(width, height){
