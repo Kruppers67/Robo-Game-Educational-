@@ -117,12 +117,16 @@ window.addEventListener('load', function(){
         }
     }
     const game = new Game(canvas.width, canvas.height);
+    let lastTime = 0;
+
     //animation loop
-    function animate(){
+    function animate(timeStamp){
+        const deltaTime = timeStamp - lastTime;
+        lastTime = timeStamp;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         game.update();
         game.draw(ctx);
-        requestAnimationFrame(animate);
+        requestAnimationFrame(animate); //Automatically creates a timestamp for the function that is trying to pass it.
     }
-    animate();
+    animate(0);
 });
