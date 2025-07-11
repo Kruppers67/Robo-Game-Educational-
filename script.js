@@ -136,11 +136,11 @@ window.addEventListener('load', function(){
         draw(context){
             context.fillStyle = this.color;
             for (let i = 0; i < this.game.ammo; i++){
-                context.fillRect(20 + 5 * i, 50, 3, 20);
+                context.fillRect(20 + 5 * i, 50, 3, 20);//Note, the more your computer browser is shrunken down, the thicker your bullets appear. Pixels are larger. Just fyi. Caused what I thought was a bullet bug.
             }
         }
         addEnemy(){
-            
+
         }
     }
     class Game {
