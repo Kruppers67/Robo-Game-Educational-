@@ -94,6 +94,8 @@ window.addEventListener('load', function(){
             this.x = this.game.width;
             this.speedX = Math.random() * -1.5 - 0.5;
             this.markedForDeletion = false;
+            this.lives = 5;
+            this.score = this.lives;
         }
         update(){
             this.x += this.speedX;//Forgot to add + in +=. This caused a bug in where the enemy's spawned in. Adding the + fixed it.
@@ -102,8 +104,11 @@ window.addEventListener('load', function(){
         draw(context){
             context.fillStyle = 'red';
             context.fillRect(this.x, this.y, this.width, this.height);
+            context.fillStyle = 'black';
+            context.font = '20px Helvetica';
+            context.fillText(this.lives, this.x, this.y);
         }
-    }
+    }   
     class Angler1 extends Enemy {//Child class: 
     // This means any methods from above ^^^ can be used by this child class from its 
     // parent if it cannot find it within this current class.
@@ -170,6 +175,16 @@ window.addEventListener('load', function(){
                 if (this.checkCollision(this.player, enemy)){
                     enemy.markedForDeletion = true;
                 }
+                this.player.projectiles.forEach(projectile => {
+                    if (this.checkCollision(projectile, enemy)){
+                        enemy.lives--;
+                        projectile.markedForDeletion = true;
+                        if (enemy.lives <= 0){
+                            enemy.markedForDeletion = true;
+                            this.score += enemy.score;
+                        }
+                    }
+                })
             });
             this.enemies = this.enemies.filter(enemy => !enemy.markedForDeletion);
             if (this.enemyTimer > this.enemyInterval && !this.gameOver){
