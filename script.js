@@ -96,7 +96,7 @@ window.addEventListener('load', function(){
             this.markedForDeletion = false;
         }
         update(){
-            this.x = this.speedX;
+            this.x += this.speedX;//Forgot to add + in +=. This caused a bug in where the enemy's spawned in. Adding the + fixed it.
             if (this.x + this.width < 0) this.markedForDeletion = true;
         }
         draw(context){
@@ -113,8 +113,8 @@ window.addEventListener('load', function(){
 
             super(game);//This allows us to use angler1's own special game constructor AND
             //its parent classes code. It merges them!
-            this.width = 228;
-            this.height = 169;
+            this.width = 228 * 0.2;//Made enemy sprites smaller as depicted in video for aesthetic purposes.
+            this.height = 169 * 0.2;
             this.y = Math.random() * (this.game.height * 0.9 - this.height);
 
         }
@@ -139,9 +139,6 @@ window.addEventListener('load', function(){
                 context.fillRect(20 + 5 * i, 50, 3, 20);//Note, the more your computer browser is shrunken down, the thicker your bullets appear. Pixels are larger. Just fyi. Caused what I thought was a bullet bug.
             }
         }
-        addEnemy(){
-
-        }
     }
     class Game {
         constructor(width, height){
@@ -152,23 +149,32 @@ window.addEventListener('load', function(){
             this.ui = new UI(this);
             this.keys = [];
             this.enemies = [];
+            this.enemyTimer = 0;
+            this.enemyInterval = 1000;
             this.ammo = 20;
             this.maxAmmo = 50;
             this.ammoTimer = 0;
             this.ammoInterval = 500;
+            this.gameOver = false;
         }
-        update(deltaTIme){
+        update(deltaTime){
             this.player.update();
             if (this.ammoTimer > this.ammoInterval){
                 if (this.ammo < this.maxAmmo) this.ammo++;
                 this.ammoTimer = 0;
             } else {
-                this.ammoTimer += deltaTIme;
+                this.ammoTimer += deltaTime;
             }
             this.enemies.forEach(enemy => {
                 enemy.update();
             });
             this.enemies = this.enemies.filter(enemy => !enemy.markedForDeletion);
+            if (this.enemyTimer > this.enemyInterval && !this.gameOver){
+                this.addEnemy();
+                this.enemyTimer = 0;
+            } else {
+                this.enemyTimer += deltaTime;
+            }
         }
         draw(context){
             this.player.draw(context);
@@ -176,6 +182,9 @@ window.addEventListener('load', function(){
             this.enemies.forEach(enemy => {
                 enemy.draw(context);
             });
+        }
+        addEnemy(){
+            this.enemies.push(new Angler1(this));
         }
     }
     const game = new Game(canvas.width, canvas.height);
