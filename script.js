@@ -152,6 +152,9 @@ window.addEventListener('load', function(){
             for (let i = 0; i < this.game.ammo; i++){
                 context.fillRect(20 + 5 * i, 50, 3, 20);//Note, the more your computer browser is shrunken down, the thicker your bullets appear. Pixels are larger. Just fyi. Caused what I thought was a bullet bug.
             }
+            //timer
+            const formattedTime = (this.game.gameTime * 0.001).toFixed(1);
+            context.fillText('Timer: ' + formattedTime, 20, 100)
             //game over messages
             if (this.game.gameOver){
                 context.TextAlign = 'center';
@@ -214,7 +217,7 @@ window.addEventListener('load', function(){
                         projectile.markedForDeletion = true;
                         if (enemy.lives <= 0){
                             enemy.markedForDeletion = true;
-                            this.score += enemy.score;
+                            if (!this.game.gameOver) this.score += enemy.score; //Only increase gamers score if gameOver is false.
                             if (this.score > this.winningScore) this.gameOver = true;
                         }
                     }
