@@ -16,6 +16,8 @@ window.addEventListener('load', function(){
                     this.game.keys.push(e.key); //If the key is not being pressed, it makes sure to add that to the list in the array so it appears as moving cosntantly when pressed.
                 } else if ( e.key === ' '){
                     this.game.player.shootTop();
+                } else if (e.key === 'd'){
+                    this.game.debug = !this.game.debug;
                 }
             });
             window.addEventListener('keyup', e => {
@@ -63,8 +65,11 @@ window.addEventListener('load', function(){
             this.maxSpeed = 3; //Can be used to limit movement speed.
             this.projectiles = []; //Holds all of the players projectiles.
             this.image = document.getElementById('player');
+            this.powerUp = false;
+            this.powerUpTimer = 0;
+            this.powerUpLimit = 10000;
         }
-        update(){
+        update(deltaTime){
             if (this.game.keys.includes('ArrowUp')) this.speedY = -1; //Move up
             else if (this.game.keys.includes('ArrowDown')) this.speedY = 1; //Move down
             else this.speedY = 0; //Else the player speed is 0 and stops moving.
@@ -79,12 +84,30 @@ window.addEventListener('load', function(){
             //Sprite animation logic
             if (this.frameX < this.maxFrame){
                 this.frameX++;
+            } else {
+                this.frameX = 0;
+            }
+            //Power up animation
+            if (this.powerUp){
+                if (this.powerUpTimer > this.powerUpLimit){
+                    this.powerUpTimer = 0;
+                    this.powerUp = false;
+                    this.frameY = 0;
+                } else {
+                    this.powerUpTimer += deltaTime;
+                    this.frameY = 1; 
+                    this.game.ammo += 0.1;
+                }
             }
 
         }
         draw(context){
-            context.fillStyle = 'black'; //Character(black rectangle)
-            context.fillRect(this.x, this.y, this.width, this.height); //character
+            if (this.game.debug) {
+                context.strokeRect(this.x, this.y, this.width, this.height); //character
+            }
+            this.projectiles.forEach(projectile => { //Draw projectiles. (Yellow rectangle as determined in our projectile object.)
+            projectile.draw(context);
+            });
             const spriteScale = 1;  // Adjust this to scale down or up the sprite.
             context.drawImage(  //This draws the seahorse player sprite. Note: When following along, I had a bug
                 this.image, //come up that would essentially not display the full seahorse. I had to put the variable
@@ -97,9 +120,7 @@ window.addEventListener('load', function(){
                 this.width * spriteScale,
                 this.height * spriteScale
             );  
-            this.projectiles.forEach(projectile => { //Draw projectiles. (Yellow rectangle as determined in our projectile object.)
-                projectile.draw(context);
-            });
+
 
         }
         shootTop(){
@@ -107,6 +128,17 @@ window.addEventListener('load', function(){
             this.projectiles.push(new Projectile(this.game, this.x + 80, this.y + 30)); //This shoots ammo from the seahorses mouth if ammo is available.
             this.game.ammo--; //If ammo is shot, decrease ammo that is available.
             }
+            if (this.powerUp) this.shootBottom();
+        }
+        shootBottom(){
+            if (this.game.ammo > 0){ //If ammo is available.
+            this.projectiles.push(new Projectile(this.game, this.x + 80, this.y + 175));
+            }
+        }
+        enterPowerUp(){
+            this.powerUpTimer = 0;
+            this.powerUp = true;
+            this.game.ammo = this.game.maxAmmo;
         }
 
     }
@@ -116,19 +148,38 @@ window.addEventListener('load', function(){
             this.x = this.game.width; //Set enemy position to the far right of the screen, off the 'camera' essentially.
             this.speedX = Math.random() * -1.5 - 0.5; //Each enemy moves at a different speed. To move left, values must be negative.
             this.markedForDeletion = false; //Initial base variable for enemies being deleted or not.
-            this.lives = 5; //How many lives each enemy has. 
-            this.score = this.lives; //If the enemy has a larger score, the player score gets updated to how many lives the player took.
+            this.frameX = 0;
+            this.frameY = 0;
+            this.maxFrame = 37;
         }
         update(){
-            this.x += this.speedX;//Forgot to add + in +=. This caused a bug in where the enemy's spawned in. Adding the + fixed it.
+            this.x += this.speedX - this.game.speed;//Forgot to add + in +=. This caused a bug in where the enemy's spawned in. Adding the + fixed it.
             if (this.x + this.width < 0) this.markedForDeletion = true; //This states that if our enemy reaches the left side of the screen and the width and x position are less than 0, marked for deletion is true. (Prevents lag),
+            if (this.frameX < this.maxFrame){
+                this.frameX++;
+            } else {
+                this.frameX = 0;
+            }
         }
         draw(context){
-            context.fillStyle = 'red'; //Color of enemy
-            context.fillRect(this.x, this.y, this.width, this.height); //Fill in enemy color.
-            context.fillStyle = 'black'; //Lives number color
+            if (this.game.debug) {
+                context.strokeRect(this.x, this.y, this.width, this.height); //Fill in enemy color.
+            };
+            const spriteScale = 1;
+            context.drawImage(
+                this.image,
+                this.frameX * this.width,
+                this.frameY * this.height,
+                this.width * spriteScale,
+                this.height * spriteScale,
+                this.x, 
+                this.y,
+                this.width * spriteScale,
+                this.height * spriteScale
+            )
             context.font = '20px Helvetica'; //Font type of lives.
             context.fillText(this.lives, this.x, this.y); //Draw text.
+            context.fillStyle = 'yellow';
         }
     }   
     class Angler1 extends Enemy {//Child class: 
@@ -140,13 +191,55 @@ window.addEventListener('load', function(){
 
             super(game);//This allows us to use angler1's own special game constructor AND
             //its parent classes code. It merges them!
-            this.width = 228 * 0.2;//Made enemy sprites smaller as depicted in video for aesthetic purposes.
-            this.height = 169 * 0.2; //size of enemy.
+            this.width = 228;//Made enemy sprites smaller as depicted in video for aesthetic purposes.
+            this.height = 169; //size of enemy.
             this.y = Math.random() * (this.game.height * 0.9 - this.height); //This puts the enemy at random positions, but limits how far down the sprite can go, to prevent it from going below the floor.
+            this.image = document.getElementById('angler1');
+            this.frameY = Math.floor(Math.random() * 3);
+            this.lives = 2; //How many lives each enemy has. 
+            this.score = this.lives; //If the enemy has a larger score, the player score gets updated to how many lives the player took.
 
         }
-    }  
+    }
+    class Angler2 extends Enemy {//Child class: 
+    // This means any methods from above ^^^ can be used by this child class from its 
+    // parent if it cannot find it within this current class.
 
+        constructor(game){//This class has its own game constructor because some attributes
+        //are specifie only to this class.
+
+            super(game);//This allows us to use angler1's own special game constructor AND
+            //its parent classes code. It merges them!
+            this.width = 213;//Made enemy sprites smaller as depicted in video for aesthetic purposes.
+            this.height = 165; //size of enemy.
+            this.y = Math.random() * (this.game.height * 0.9 - this.height); //This puts the enemy at random positions, but limits how far down the sprite can go, to prevent it from going below the floor.
+            this.image = document.getElementById('angler2');
+            this.frameY = Math.floor(Math.random() * 2);
+            this.lives = 3; //How many lives each enemy has. 
+            this.score = this.lives; //If the enemy has a larger score, the player score gets updated to how many lives the player took.
+
+        }
+    }
+    class LuckyFish extends Enemy {//Child class: 
+    // This means any methods from above ^^^ can be used by this child class from its 
+    // parent if it cannot find it within this current class.
+
+        constructor(game){//This class has its own game constructor because some attributes
+        //are specifie only to this class.
+
+            super(game);//This allows us to use angler1's own special game constructor AND
+            //its parent classes code. It merges them!
+            this.width = 99;//Made enemy sprites smaller as depicted in video for aesthetic purposes.
+            this.height = 95; //size of enemy.
+            this.y = Math.random() * (this.game.height * 0.9 - this.height); //This puts the enemy at random positions, but limits how far down the sprite can go, to prevent it from going below the floor.
+            this.image = document.getElementById('lucky');
+            this.frameY = Math.floor(Math.random() * 2);
+            this.lives = 3; //How many lives each enemy has. 
+            this.score = 15; //If the enemy has a larger score, the player score gets updated to how many lives the player took.
+            this.type = 'lucky';
+
+        }
+    }
     class Layer {
         constructor(game, image, speedModifier){
             this.game = game; //Links game
@@ -262,17 +355,20 @@ window.addEventListener('load', function(){
 
             //Time mechanics
             this.gameTime = 0; //How long the game has been running.
-            this.timeLimit = 5000; //How long the game will run before ending.
+            this.timeLimit = 15000; //How long the game will run before ending.
 
             //Game speed.
             this.speed = 1;
+
+            //Debug system
+            this.debug = true;
         }
         update(deltaTime){
             if (!this.gameOver) this.gameTime += deltaTime;
             if (this.gameTime > this.timeLimit) this.gameOver = true;
             this.background.update();
             this.background.layer4.update();
-            this.player.update();
+            this.player.update(deltaTime);
             if (this.ammoTimer > this.ammoInterval){
                 if (this.ammo < this.maxAmmo) this.ammo++;
                 this.ammoTimer = 0;
@@ -283,6 +379,8 @@ window.addEventListener('load', function(){
                 enemy.update();
                 if (this.checkCollision(this.player, enemy)){
                     enemy.markedForDeletion = true;
+                    if (enemy.type === 'lucky') this.player.enterPowerUp(); //Fixed bug, = did not work and made it so that the angler fish, even the regular ones caused powerups.
+                    else this.score--; //Changed the = sign to === and it works correctly now.
                 }
                 this.player.projectiles.forEach(projectile => {
                     if (this.checkCollision(projectile, enemy)){
@@ -314,7 +412,11 @@ window.addEventListener('load', function(){
             this.background.layer4.draw(context);
         }
         addEnemy(){
-            this.enemies.push(new Angler1(this));
+            const randomize = Math.random(); //Randomize what enemy gets spawned.
+            if (randomize < 0.5) this.enemies.push(new Angler1(this));
+            else if (randomize < 0.6) this.enemies.push(new Angler2(this));
+            else this.enemies.push(new LuckyFish(this));
+            
         }
         checkCollision(rect1, rect2){
             return (
