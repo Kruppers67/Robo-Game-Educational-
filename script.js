@@ -351,7 +351,7 @@ window.addEventListener('load', function(){
             //Game state
             this.gameOver = false;
             this.score = 0;
-            this.winningScore = 10; //Score needed to win.
+            this.winningScore = 200; //Score needed to win.
 
             //Time mechanics
             this.gameTime = 0; //How long the game has been running.
