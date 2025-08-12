@@ -355,7 +355,7 @@ window.addEventListener('load', function(){
 
             //Time mechanics
             this.gameTime = 0; //How long the game has been running.
-            this.timeLimit = 15000 * 4; //How long the game will run before ending.
+            this.timeLimit = 30000; //How long the game will run before ending.
 
             //Game speed.
             this.speed = 1;
